@@ -1,0 +1,216 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Clubsport Apex Run</title>
+<meta name="description" content="A 3D time-attack driving game in your browser, built around the 2016 Golf GTI Clubsport.">
+<meta name="theme-color" content="#0b0e12">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0e12; --panel:rgba(12,16,22,.62); --line:rgba(255,255,255,.14);
+    --text:#f3f6f9; --dim:#9aa6b2; --accent:#2fb8ff; --hot:#ff3b30; --gold:#ffc83d; --good:#4cd964;
+    --font: 'Rajdhani', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;touch-action:none;}
+  canvas#game{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none;}
+  .hidden{display:none !important;}
+  .num{font-variant-numeric:tabular-nums;}
+
+  /* ---------- loading ---------- */
+  #loading{position:fixed;inset:0;z-index:50;background:radial-gradient(120% 90% at 50% 30%,#18222e 0%,#0b0e12 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .6s;}
+  #loading h1{margin:0;font-size:clamp(34px,7vw,64px);font-style:italic;font-weight:700;letter-spacing:.06em;}
+  #loading h1 b{color:var(--hot);}
+  .bar{width:min(360px,70vw);height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;}
+  .bar>i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#7fe0ff);transition:width .2s;}
+  #loadtxt{color:var(--dim);font-size:15px;letter-spacing:.14em;text-transform:uppercase;}
+
+  /* ---------- menu ---------- */
+  #menu{position:fixed;inset:0;z-index:20;display:flex;align-items:center;padding:0 clamp(18px,6vw,90px);
+    background:linear-gradient(90deg,rgba(6,9,13,.82) 0%,rgba(6,9,13,.55) 38%,rgba(6,9,13,0) 70%);}
+  .menu-card{max-width:560px;display:flex;flex-direction:column;gap:clamp(8px,2vh,18px);}
+  @media (max-height:760px){.keys{display:none;}}
+  .kicker{color:var(--accent);font-weight:700;letter-spacing:.32em;font-size:14px;text-transform:uppercase;}
+  .title{margin:0;font-size:clamp(40px,min(8vw,13vh),96px);line-height:.88;font-style:italic;font-weight:700;letter-spacing:.02em;text-transform:uppercase;text-shadow:0 4px 30px rgba(0,0,0,.45);}
+  .title span{display:block;color:var(--hot);white-space:nowrap;}
+  .sub{color:#cfd8e0;font-size:clamp(15px,2vw,19px);font-weight:500;max-width:440px;line-height:1.35;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+  button{font:inherit;cursor:pointer;color:var(--text);border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:12px 22px;border-radius:4px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;font-size:16px;transition:transform .12s, background .12s, border-color .12s;}
+  button:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35);}
+  button:active{transform:translateY(1px) scale(.99);}
+  button.primary{background:linear-gradient(180deg,#ff4a3d,#d6231a);border-color:#ff6a5e;font-size:20px;padding:14px 34px;transform:skewX(-8deg);}
+  button.primary>span{display:inline-block;transform:skewX(8deg);}
+  button.primary:hover{background:linear-gradient(180deg,#ff6154,#e32a20);}
+  .swatches{display:flex;gap:8px;align-items:center;}
+  .swatches label{color:var(--dim);font-size:13px;letter-spacing:.2em;text-transform:uppercase;margin-right:6px;}
+  .sw{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.25);padding:0;cursor:pointer;background:var(--c);box-shadow:inset 0 -5px 8px rgba(0,0,0,.35),inset 0 3px 5px rgba(255,255,255,.35);transform:none;}
+  .sw.on{border-color:#fff;box-shadow:0 0 0 3px rgba(47,184,255,.55),inset 0 -5px 8px rgba(0,0,0,.35),inset 0 3px 5px rgba(255,255,255,.35);}
+  .keys{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:15px;color:#cfd8e0;margin-top:2px;}
+  .keys kbd{font:inherit;font-weight:700;font-size:13px;letter-spacing:.06em;background:rgba(255,255,255,.1);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 7px;margin-right:3px;color:#fff;}
+  .keys dt{white-space:nowrap}.keys dd{margin:0;color:var(--dim);}
+  .records{display:flex;gap:26px;color:var(--dim);font-size:14px;letter-spacing:.14em;text-transform:uppercase;}
+  .records b{display:block;color:var(--text);font-size:22px;letter-spacing:.02em;margin-top:2px;}
+  .credit{position:fixed;left:14px;bottom:10px;right:14px;z-index:21;color:rgba(255,255,255,.5);font-size:12px;line-height:1.35;font-weight:500;}
+  .credit a{color:rgba(255,255,255,.75);}
+
+  /* ---------- HUD ---------- */
+  #hud{position:fixed;inset:0;z-index:10;pointer-events:none;}
+  .panel{background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:4px;}
+  #timing{position:absolute;left:max(16px,env(safe-area-inset-left));top:max(16px,env(safe-area-inset-top));padding:10px 16px 12px;min-width:210px;transform:skewX(-6deg);}
+  #timing>*{transform:skewX(6deg);}
+  .lbl{font-size:12px;letter-spacing:.24em;color:var(--dim);text-transform:uppercase;font-weight:600;}
+  #lapno{font-size:30px;font-weight:700;font-style:italic;line-height:1;}
+  #lapno small{font-size:16px;color:var(--dim);margin-left:2px;}
+  #laptime{font-size:40px;font-weight:700;line-height:1.05;margin-top:4px;}
+  .sub-times{display:flex;gap:18px;margin-top:6px;font-size:17px;font-weight:600;color:#dce4ea;}
+  .sub-times .lbl{display:block;margin-bottom:-1px;}
+  #speedo{position:absolute;right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));width:min(300px,48vw);text-align:right;}
+  #spd{font-size:clamp(64px,11vw,110px);font-weight:700;font-style:italic;line-height:.9;text-shadow:0 2px 14px rgba(0,0,0,.5);}
+  #spd.boost{color:#7fe0ff;text-shadow:0 0 18px rgba(47,184,255,.9);}
+  .unit{font-size:16px;letter-spacing:.3em;color:var(--dim);font-weight:700;margin-top:2px;}
+  .gearrow{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:8px;}
+  #gear{font-size:34px;font-weight:700;font-style:italic;width:42px;height:42px;line-height:40px;text-align:center;border:2px solid var(--line);border-radius:4px;background:var(--panel);}
+  #rpm{display:flex;gap:3px;flex:1;height:18px;align-items:flex-end;}
+  #rpm i{flex:1;height:100%;background:rgba(255,255,255,.14);transform:skewX(-20deg);border-radius:1px;transition:background .05s;}
+  #rpm i.on{background:#e9f4ff;} #rpm i.on.warm{background:var(--gold);} #rpm i.on.red{background:var(--hot);}
+  #nitrobox{position:absolute;left:50%;transform:translateX(-50%);bottom:max(20px,env(safe-area-inset-bottom));width:min(420px,46vw);}
+  #nitrobox .lbl{display:flex;justify-content:space-between;margin-bottom:5px;}
+  .nbar{height:12px;background:rgba(0,0,0,.45);border:1px solid var(--line);transform:skewX(-20deg);overflow:hidden;}
+  .nbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#1b8fe0,#68d8ff);box-shadow:0 0 12px rgba(47,184,255,.8);}
+  .nbar.full i{background:linear-gradient(90deg,#68d8ff,#e8fbff);}
+  .nbar.on i{animation:pulse .35s infinite alternate;}
+  @keyframes pulse{to{filter:brightness(1.5)}}
+  #minimapWrap{position:absolute;right:max(16px,env(safe-area-inset-right));top:max(16px,env(safe-area-inset-top));padding:6px;}
+  #minimap{width:clamp(110px,18vw,170px);height:clamp(110px,18vw,170px);display:block;}
+  #drift{position:absolute;left:max(18px,env(safe-area-inset-left));bottom:max(24px,env(safe-area-inset-bottom));font-size:30px;font-weight:700;font-style:italic;color:var(--gold);opacity:0;transition:opacity .25s;text-shadow:0 2px 12px rgba(0,0,0,.6);}
+  #drift small{display:block;font-size:12px;letter-spacing:.3em;color:#ffe9a8;font-style:normal;}
+  #banner{position:absolute;left:0;right:0;top:20%;text-align:center;font-weight:700;font-style:italic;text-transform:uppercase;text-shadow:0 4px 30px rgba(0,0,0,.6);pointer-events:none;}
+  #banner .big{font-size:clamp(70px,16vw,190px);line-height:.9;display:inline-block;}
+  #banner .big.pop{animation:pop .9s cubic-bezier(.2,.9,.3,1.2) both;}
+  @keyframes pop{0%{transform:scale(1.9);opacity:0}25%{opacity:1}100%{transform:scale(1);opacity:1}}
+  #toast{position:absolute;left:0;right:0;top:calc(20% + 8px);text-align:center;pointer-events:none;}
+  #toast div{display:inline-block;margin:4px;padding:6px 18px;font-size:clamp(20px,3.4vw,30px);font-weight:700;font-style:italic;text-transform:uppercase;letter-spacing:.06em;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);animation:toast 2.3s both;}
+  #toast div.good{border-left-color:var(--good);} #toast div.gold{border-left-color:var(--gold);color:var(--gold);} #toast div.warn{border-left-color:var(--hot);}
+  @keyframes toast{0%{transform:translateY(-10px);opacity:0}10%{transform:none;opacity:1}85%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
+  #fx{position:fixed;inset:0;z-index:5;pointer-events:none;opacity:0;
+      background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(20,60,110,.0) 62%,rgba(47,184,255,.38) 100%);transition:opacity .15s;}
+  #flash{position:fixed;inset:0;z-index:6;pointer-events:none;background:#fff;opacity:0;}
+
+  /* ---------- overlays ---------- */
+  .overlay{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:rgba(6,9,13,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+  .sheet{width:min(560px,92vw);padding:26px 30px 28px;display:flex;flex-direction:column;gap:16px;background:rgba(14,19,26,.9);border:1px solid var(--line);border-radius:6px;}
+  .sheet h2{margin:0;font-size:clamp(34px,6vw,52px);font-style:italic;text-transform:uppercase;line-height:1;}
+  .medal{display:inline-flex;align-items:center;gap:10px;font-size:22px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;}
+  .medal i{width:26px;height:26px;border-radius:50%;display:inline-block;background:var(--m,#888);box-shadow:inset 0 -6px 8px rgba(0,0,0,.35),inset 0 3px 6px rgba(255,255,255,.5),0 0 14px var(--m);}
+  table{border-collapse:collapse;width:100%;font-size:20px;font-weight:600;}
+  td{padding:5px 0;border-bottom:1px solid var(--line);} td:last-child{text-align:right;} td.k{color:var(--dim);letter-spacing:.14em;font-size:14px;text-transform:uppercase;}
+  tr.best td{color:var(--gold);} tr.total td{font-size:26px;border-bottom:none;padding-top:10px;}
+  .rec{color:var(--gold);font-weight:700;letter-spacing:.2em;font-size:14px;text-transform:uppercase;}
+  .hint{color:var(--dim);font-size:14px;letter-spacing:.08em;}
+
+  /* ---------- touch controls ---------- */
+  #touch{position:fixed;inset:0;z-index:12;pointer-events:none;}
+  #touch .tb{position:absolute;pointer-events:auto;width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;letter-spacing:.1em;background:rgba(12,16,22,.5);border:2px solid rgba(255,255,255,.28);padding:0;transform:none;touch-action:none;}
+  #touch .tb.on{background:rgba(47,184,255,.45);border-color:#9fe3ff;}
+  #tL{left:max(16px,env(safe-area-inset-left));bottom:max(30px,env(safe-area-inset-bottom));}
+  #tR{left:calc(max(16px,env(safe-area-inset-left)) + 98px);bottom:max(30px,env(safe-area-inset-bottom));}
+  #tG{right:max(16px,env(safe-area-inset-right));bottom:max(30px,env(safe-area-inset-bottom));width:96px;height:96px;background:rgba(40,160,70,.45);}
+  #tB{right:calc(max(16px,env(safe-area-inset-right)) + 110px);bottom:max(30px,env(safe-area-inset-bottom));background:rgba(190,40,40,.4);}
+  #tN{right:max(16px,env(safe-area-inset-right));bottom:calc(max(30px,env(safe-area-inset-bottom)) + 112px);background:rgba(30,120,200,.5);}
+  #tD{right:calc(max(16px,env(safe-area-inset-right)) + 110px);bottom:calc(max(30px,env(safe-area-inset-bottom)) + 100px);width:70px;height:70px;font-size:13px;}
+  #topbtns{position:fixed;z-index:13;left:50%;transform:translateX(-50%);top:max(12px,env(safe-area-inset-top));display:flex;gap:8px;}
+  #topbtns button{padding:6px 12px;font-size:13px;pointer-events:auto;}
+  @media (max-width:760px){
+    #timing{min-width:150px;padding:6px 10px;} #laptime{font-size:28px;} #lapno{font-size:22px;} .sub-times{font-size:14px;gap:12px;}
+    #nitrobox{width:40vw;bottom:auto;top:max(78px,calc(env(safe-area-inset-top) + 74px));left:auto;right:max(16px,env(safe-area-inset-right));transform:none;}
+    #speedo{bottom:max(130px,calc(env(safe-area-inset-bottom) + 126px));width:42vw;}
+    #drift{bottom:max(130px,calc(env(safe-area-inset-bottom) + 126px));}
+    #minimapWrap{display:none;}
+    .keys{display:none;} .menu-card{gap:14px;}
+  }
+</style>
+</head>
+<body>
+<canvas id="game" tabindex="0"></canvas>
+<div id="fx"></div><div id="flash"></div>
+
+<div id="loading">
+  <h1>CLUBSPORT <b>APEX RUN</b></h1>
+  <div class="bar"><i id="loadbar"></i></div>
+  <div id="loadtxt">Warming up the turbo…</div>
+</div>
+
+<div id="menu" class="hidden">
+  <div class="menu-card">
+    <div class="kicker">3-lap time attack</div>
+    <h1 class="title">Clubsport<span>Apex Run</span></h1>
+    <div class="sub">Drift to charge nitro. Hit the yellow boost pads. Chase the gold medal around a 2.6&nbsp;km sunset circuit.</div>
+    <div class="row">
+      <button id="btnStart" class="primary"><span>Start race</span></button>
+    </div>
+    <div class="swatches" id="swatches"><label>Paint</label></div>
+    <div class="records"><div>Best lap<b class="num" id="recLap">--:--.---</b></div><div>Best race<b class="num" id="recRace">--:--.---</b></div></div>
+    <dl class="keys">
+      <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows</dt><dd>Drive</dd>
+      <dt><kbd>Space</kbd></dt><dd>Handbrake — slide into corners</dd>
+      <dt><kbd>Shift</kbd></dt><dd>Nitro (charged by drifting)</dd>
+      <dt><kbd>C</kbd> <kbd>R</kbd> <kbd>M</kbd> <kbd>P</kbd></dt><dd>Camera · Reset to track · Mute · Pause</dd>
+    </dl>
+  </div>
+</div>
+
+<div id="hud" class="hidden">
+  <div id="timing" class="panel">
+    <div id="lapno" class="num">LAP 1<small>/3</small></div>
+    <div id="laptime" class="num">0:00.000</div>
+    <div class="sub-times"><div><span class="lbl">Last</span><span id="lastLap" class="num">--</span></div><div><span class="lbl">Best</span><span id="bestLap" class="num">--</span></div><div><span class="lbl">Total</span><span id="totalTime" class="num">0:00.0</span></div></div>
+  </div>
+  <div id="minimapWrap" class="panel"><canvas id="minimap" width="340" height="340"></canvas></div>
+  <div id="banner"><span class="big" id="bannerTxt"></span></div>
+  <div id="toast"></div>
+  <div id="drift"><small>DRIFT</small><span id="driftVal" class="num">0</span></div>
+  <div id="nitrobox"><div class="lbl"><span>Nitro</span><span id="nitroHint">Drift to charge</span></div><div class="nbar" id="nbar"><i id="nfill"></i></div></div>
+  <div id="speedo">
+    <div id="spd" class="num">0</div><div class="unit">KM/H</div>
+    <div class="gearrow"><div id="rpm"></div><div id="gear">N</div></div>
+  </div>
+</div>
+
+<div id="topbtns" class="hidden"><button id="btnPause">Pause</button><button id="btnCam">Camera</button><button id="btnMute">Sound</button></div>
+
+<div id="touch" class="hidden">
+  <button class="tb" id="tL">◀</button><button class="tb" id="tR">▶</button>
+  <button class="tb" id="tB">BRAKE</button><button class="tb" id="tG">GAS</button>
+  <button class="tb" id="tN">NITRO</button><button class="tb" id="tD">DRIFT</button>
+</div>
+
+<div id="pause" class="overlay hidden"><div class="sheet">
+  <h2>Paused</h2>
+  <div class="row"><button id="btnResume" class="primary"><span>Resume</span></button><button id="btnRestart">Restart</button><button id="btnQuit">Menu</button></div>
+  <div class="hint">P / Esc to resume · R resets the car to the track</div>
+</div></div>
+
+<div id="results" class="overlay hidden"><div class="sheet">
+  <div class="medal" id="medal"><i></i><span id="medalTxt">Finished</span></div>
+  <h2 id="resTitle">Race complete</h2>
+  <table id="resTable"></table>
+  <div class="rec hidden" id="resRec">New record!</div>
+  <div class="row"><button id="btnAgain" class="primary"><span>Race again</span></button><button id="btnMenu">Menu</button></div>
+  <div class="hint">Enter to race again</div>
+</div></div>
+
+<div class="credit" id="credit">Car model “2016 Volkswagen Golf GTI Clubsport Mk7” by <a href="https://sketchfab.com/ddiaz-design" target="_blank" rel="noopener">Ddiaz Design</a> (<a href="https://sketchfab.com/3d-models/2016-volkswagen-golf-gti-clubsport-mk7-492301d401ea4fb7bb1cb63e980051d0" target="_blank" rel="noopener">Sketchfab</a>), licensed <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>. Fan project, not affiliated with Volkswagen.</div>
+
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/jsm/" } }
+</script>
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>
+
+</body></html>
